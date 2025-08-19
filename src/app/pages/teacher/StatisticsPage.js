@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Card from '../ui/Card';
+import Card from '../../ui/Card';
 
 export default function StatisticsPage({ user, onBack }) {
   const [activeTab, setActiveTab] = useState('wrong-answers');

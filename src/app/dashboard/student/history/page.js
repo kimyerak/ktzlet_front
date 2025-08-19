@@ -3,7 +3,7 @@
 import { useAuth } from '../../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import HistoryPage from '../../../pages/HistoryPage';
+import HistoryPage from '../../../pages/student/HistoryPage';
 import Header from '../../../ui/Header';
 
 export default function HistoryPageRoute() {

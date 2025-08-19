@@ -3,7 +3,7 @@
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import TeacherDashboard from '../../pages/TeacherDashboard';
+import TeacherDashboard from '../../pages/teacher/TeacherDashboard';
 import Header from '../../ui/Header';
 
 export default function TeacherDashboardPage() {

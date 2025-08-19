@@ -3,7 +3,7 @@
 import { useAuth } from '../../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import StatisticsPage from '../../../pages/StatisticsPage';
+import StatisticsPage from '../../../pages/teacher/StatisticsPage';
 import Header from '../../../ui/Header';
 
 export default function StatisticsPageRoute() {

@@ -3,7 +3,7 @@
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import StudentDashboard from '../../pages/StudentDashboard';
+import StudentDashboard from '../../pages/student/StudentDashboard';
 import Header from '../../ui/Header';
 
 export default function StudentDashboardPage() {

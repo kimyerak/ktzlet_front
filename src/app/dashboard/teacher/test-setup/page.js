@@ -3,7 +3,7 @@
 import { useAuth } from '../../../contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import TestSetup from '../../../pages/TestSetup';
+import TestSetup from '../../../pages/teacher/TestSetup';
 import Header from '../../../ui/Header';
 
 export default function TestSetupPage() {

@@ -3,7 +3,7 @@
 import { useAuth } from '../../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import StudentManagement from '../../../pages/StudentManagement';
+import StudentManagement from '../../../pages/teacher/StudentManagement';
 import Header from '../../../ui/Header';
 
 export default function StudentsPage() {

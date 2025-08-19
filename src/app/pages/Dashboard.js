@@ -1,8 +1,8 @@
 'use client';
 
 import { useAuth } from '../contexts/AuthContext';
-import TeacherDashboard from './TeacherDashboard';
-import StudentDashboard from './StudentDashboard';
+import TeacherDashboard from './teacher/TeacherDashboard';
+import StudentDashboard from './student/StudentDashboard';
 import Header from '../ui/Header';
 
 export default function Dashboard() {

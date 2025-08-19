@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Header from '../ui/Header';
+import Header from '../../ui/Header';
 
 export default function TestTaking({ testData, onSubmit, onBack, user }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);

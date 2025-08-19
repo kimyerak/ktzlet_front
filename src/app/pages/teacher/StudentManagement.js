@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Input from '../ui/Input';
-import Card from '../ui/Card';
+import Input from '../../ui/Input';
+import Card from '../../ui/Card';
 
 export default function StudentManagement({ user, onBack }) {
   const [students, setStudents] = useState([]);
