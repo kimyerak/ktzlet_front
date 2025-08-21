@@ -51,16 +51,57 @@ export const apiCall = async (endpoint, options = {}) => {
   };
 
   try {
+    console.log(`API 호출: ${config.method || 'GET'} ${API_BASE_URL}${endpoint}`);
+    console.log('API 호출 설정:', {
+      method: config.method || 'GET',
+      headers: config.headers,
+      body: config.body
+    });
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
     
+    console.log(`API 응답 상태: ${response.status} ${response.statusText}`);
+    console.log('API 응답 헤더:', Object.fromEntries(response.headers.entries()));
+    
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      let errorData = {};
+      try {
+        errorData = await response.json();
+      } catch (jsonError) {
+        console.warn('응답을 JSON으로 파싱할 수 없음:', jsonError);
+      }
+      
+      const errorMessage = errorData.message || errorData.error || `HTTP error! status: ${response.status}`;
+      console.error('API 오류 응답:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData: errorData,
+        errorMessage: errorMessage
+      });
+      
+      throw new Error(errorMessage);
     }
     
-    return await response.json();
+    // 204 No Content 응답은 성공이지만 JSON이 없음
+    if (response.status === 204) {
+      console.log('API 성공 응답: 204 No Content (삭제 성공)');
+      return { success: true, message: '삭제 완료' };
+    }
+    
+    // 다른 성공 응답은 JSON 파싱
+    const data = await response.json();
+    console.log('API 성공 응답:', data);
+    return data;
   } catch (error) {
-    console.error('API 호출 오류:', error);
+    console.error('API 호출 오류 상세:', {
+      endpoint: endpoint,
+      method: config.method || 'GET',
+      error: error.message,
+      stack: error.stack,
+      errorObject: error,
+      errorType: error.constructor.name,
+      errorKeys: Object.keys(error)
+    });
     
     // 백엔드 서버가 시작되지 않은 경우 특별 처리
     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {

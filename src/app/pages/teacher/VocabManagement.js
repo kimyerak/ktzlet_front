@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { vocabService } from '../../services/apiService';
+import { vocabGenerationService } from '../../services/vocabGenerationService';
 import Header from '../../ui/Header';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
@@ -20,6 +21,7 @@ export default function VocabManagement({ user }) {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
 
   // vocab 목록 로드
   const loadVocabs = async () => {
@@ -138,6 +140,50 @@ export default function VocabManagement({ user }) {
     setError('');
   };
 
+  // 음성 입력으로 단어 추가
+  const handleVoiceInput = async () => {
+    setIsRecording(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      console.log('음성 입력 시작...');
+      
+      // 사용자에게 안내 메시지 표시
+      setSuccess('🎤 마이크를 허용하고 영어 단어를 말해주세요 (예: "apple", "beautiful")');
+      
+      const vocab = await vocabGenerationService.generateVocabFromSpeech();
+      
+      // 폼에 자동으로 채우기
+      setFormData({
+        word: vocab.word,
+        definition: vocab.definition
+      });
+      
+      // 추가 폼 표시
+      setShowAddForm(true);
+      
+      setSuccess(`✅ "${vocab.word}" → "${vocab.definition}" 단어가 인식되었습니다. 확인 후 추가해주세요.`);
+      
+    } catch (error) {
+      console.error('음성 입력 오류:', error);
+      
+      // 더 친화적인 오류 메시지
+      let errorMessage = error.message;
+      if (error.message.includes('음성을 인식하지 못했습니다')) {
+        errorMessage = '음성이 인식되지 않았습니다. 마이크를 확인하고 다시 말해주세요.';
+      } else if (error.message.includes('유효한 영어 단어를 인식하지 못했습니다')) {
+        errorMessage = '영어 단어를 명확하게 말해주세요. (예: "apple", "beautiful", "computer")';
+      } else if (error.message.includes('Web Speech API를 지원하지 않는 브라우저')) {
+        errorMessage = '이 브라우저는 음성 인식을 지원하지 않습니다. Chrome이나 Edge를 사용해주세요.';
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsRecording(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-100 via-blue-50 to-purple-100">
       <Header user={user} />
@@ -166,13 +212,22 @@ export default function VocabManagement({ user }) {
                 전체
               </Button>
             </div>
-            <Button 
-              onClick={() => setShowAddForm(true)} 
-              variant="primary"
-              disabled={showAddForm}
-            >
-              ➕ 단어 추가
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => setShowAddForm(true)} 
+                variant="primary"
+                disabled={showAddForm}
+              >
+                ➕ 단어 추가
+              </Button>
+              <Button 
+                onClick={handleVoiceInput}
+                variant="secondary"
+                disabled={isRecording || showAddForm}
+              >
+                {isRecording ? '🎤 음성 인식 중...' : '🎤 음성 입력'}
+              </Button>
+            </div>
           </div>
         </Card>
 
@@ -210,6 +265,14 @@ export default function VocabManagement({ user }) {
               <div className="flex gap-2">
                 <Button type="submit" variant="primary">
                   {editingVocab ? '💾 수정' : '✅ 추가'}
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={handleVoiceInput}
+                  variant="secondary"
+                  disabled={isRecording}
+                >
+                  {isRecording ? '🎤 음성 인식 중...' : '🎤 음성 입력'}
                 </Button>
                 <Button type="button" onClick={cancelForm} variant="outline">
                   ❌ 취소

@@ -16,24 +16,24 @@ export default function TeacherDashboard({ user }) {
   const [editingTestId, setEditingTestId] = useState(null);
 
   // 백엔드에서 퀴즈 목록 불러오기
-  useEffect(() => {
-    const loadQuizzes = async () => {
-      try {
-        if (user?.id) {
-          const quizzes = await quizService.getQuizzesByTeacher(user.id);
-          setCreatedTests(quizzes);
-        }
-      } catch (error) {
-        console.error('퀴즈 목록 로드 오류:', error);
-        // 백엔드 연결 실패 시 로컬 스토리지에서 불러오기
-    const savedTests = localStorage.getItem('createdTests');
-    if (savedTests) {
-      setCreatedTests(JSON.parse(savedTests));
-    }
+  const loadCreatedTests = async () => {
+    try {
+      if (user?.id) {
+        const quizzes = await quizService.getQuizzesByTeacher(user.id);
+        setCreatedTests(quizzes);
       }
-    };
-    
-    loadQuizzes();
+    } catch (error) {
+      console.error('퀴즈 목록 로드 오류:', error);
+      // 백엔드 연결 실패 시 로컬 스토리지에서 불러오기
+      const savedTests = localStorage.getItem('createdTests');
+      if (savedTests) {
+        setCreatedTests(JSON.parse(savedTests));
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadCreatedTests();
   }, [user?.id]);
 
   // 테스트 저장 (생성/수정 공용)
@@ -73,67 +73,107 @@ export default function TeacherDashboard({ user }) {
     setEditingTestId(null);
   };
 
+  // 삭제 중인 퀴즈 ID들을 추적
+  const [deletingQuizIds, setDeletingQuizIds] = useState(new Set());
+
   // 테스트 삭제
-  const deleteTest = (testId) => {
+  const deleteTest = async (testId) => {
+    // 이미 삭제 중인지 확인
+    if (deletingQuizIds.has(testId)) {
+      console.log('이미 삭제 중인 퀴즈입니다:', testId);
+      return;
+    }
+
     if (confirm('정말 이 테스트를 삭제하시겠습니까?')) {
-      const updatedTests = createdTests.filter(test => test.id !== testId);
-      setCreatedTests(updatedTests);
-      localStorage.setItem('createdTests', JSON.stringify(updatedTests));
-      
-      // 학생용 테스트 목록에서도 제거
-      const availableTests = JSON.parse(localStorage.getItem('availableTests') || '[]');
-      const updatedAvailable = availableTests.filter(test => test.id !== testId);
-      localStorage.setItem('availableTests', JSON.stringify(updatedAvailable));
+      try {
+        // 삭제 중 상태로 설정
+        setDeletingQuizIds(prev => new Set(prev).add(testId));
+        
+        console.log('퀴즈 삭제 시작:', testId);
+        console.log('삭제할 퀴즈 ID 타입:', typeof testId);
+        console.log('삭제할 퀴즈 ID 값:', testId);
+        
+        // 백엔드 API 호출
+        console.log('삭제 API 호출 전:', {
+          testId: testId,
+          endpoint: `/api/quizzes/${testId}`,
+          method: 'DELETE'
+        });
+        
+        let result;
+        try {
+          result = await quizService.deleteQuiz(testId);
+          console.log('퀴즈 삭제 API 응답:', result);
+          console.log('퀴즈 삭제 완료:', testId);
+        } catch (apiError) {
+          console.error('API 호출 자체에서 오류:', {
+            apiError: apiError,
+            apiErrorMessage: apiError.message,
+            apiErrorStack: apiError.stack
+          });
+          throw apiError;
+        }
+        
+        // 로컬 상태 업데이트
+        const updatedTests = createdTests.filter(test => test.id !== testId);
+        setCreatedTests(updatedTests);
+        localStorage.setItem('createdTests', JSON.stringify(updatedTests));
+        
+        // 학생용 테스트 목록에서도 제거
+        const availableTests = JSON.parse(localStorage.getItem('availableTests') || '[]');
+        const updatedAvailable = availableTests.filter(test => test.id !== testId);
+        localStorage.setItem('availableTests', JSON.stringify(updatedAvailable));
+        
+        // 성공 메시지
+        alert('퀴즈가 성공적으로 삭제되었습니다.');
+        
+        // 목록 새로고침
+        loadCreatedTests();
+        
+      } catch (error) {
+        console.error('퀴즈 삭제 오류 상세:', {
+          message: error.message,
+          stack: error.stack,
+          testId: testId,
+          testIdType: typeof testId,
+          errorObject: error,
+          errorType: error.constructor.name,
+          errorKeys: Object.keys(error),
+          errorString: error.toString()
+        });
+        
+        let errorMessage = '퀴즈 삭제에 실패했습니다.';
+        
+        if (error.message.includes('OptimisticLockingFailureException') || 
+            error.message.includes('Row was updated or deleted by another transaction')) {
+          errorMessage = '퀴즈가 이미 삭제되었거나 다른 사용자에 의해 수정되었습니다.';
+        } else if (error.message.includes('백엔드 서버가 시작되지 않았습니다')) {
+          errorMessage = '백엔드 서버가 시작되지 않았습니다. 서버를 확인해주세요.';
+        } else if (error.message.includes('404')) {
+          errorMessage = '삭제할 퀴즈를 찾을 수 없습니다.';
+        } else if (error.message.includes('403')) {
+          errorMessage = '삭제 권한이 없습니다.';
+        } else if (error.message.includes('500')) {
+          errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+        }
+        
+        alert(errorMessage);
+      } finally {
+        // 삭제 중 상태 해제
+        setDeletingQuizIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(testId);
+          return newSet;
+        });
+      }
     }
   };
 
-  // 편집 시작
+  // 보기 시작
   const startEdit = async (test) => {
     try {
-      // 퀴즈 상세 정보 가져오기 (questions 포함)
-      const quizDetail = await quizService.getQuizById(test.id);
-      
-      const questions = quizDetail.questions || [];
-      console.log(`퀴즈 ${test.id}의 문제 수: ${questions.length}`);
-      
-      // 프론트엔드 형식으로 변환
-    const configData = {
-        id: quizDetail.id,
-        title: quizDetail.title,
-        numofquestion: quizDetail.numOfQuestions,
-        time_limit_sec: quizDetail.timeLimitSec,
-        open_at: quizDetail.openAt,
-        close_at: quizDetail.closeAt,
-        target_score: quizDetail.targetScore,
-        questions: questions.map(q => {
-          // 백엔드 타입을 프론트엔드 타입으로 매핑
-          let frontendType;
-          switch (q.type) {
-            case 'DICTATION':
-              frontendType = 'dictation';
-              break;
-            case 'OX':
-              frontendType = 'ox';
-              break;
-            case 'MULTIPLE':
-              frontendType = 'multiple';
-              break;
-            default:
-              frontendType = 'dictation';
-          }
-          
-          return {
-            id: q.id,
-            type: frontendType,
-            question: q.stem,
-            correctAnswer: q.correctAnswer,
-            explanation: q.explanation || '',
-            points: q.points
-          };
-        })
-      };
-      
-    router.push(`/dashboard/teacher/test-setup?edit=${encodeURIComponent(JSON.stringify(configData))}`);
+      // 보기 전용 페이지로 이동
+      router.push(`/dashboard/teacher/test-view?id=${test.id}`);
     } catch (error) {
       console.error('퀴즈 정보 로드 오류:', error);
       alert('퀴즈 정보를 불러오는 중 오류가 발생했습니다.');
@@ -141,13 +181,6 @@ export default function TeacherDashboard({ user }) {
   };
 
   const menuItems = [
-    {
-      title: '전체 통계 보기',
-      description: '학생들의 학습 현황과 성과를 한눈에 확인해보세요',
-      icon: '📊',
-      color: 'from-blue-400 to-indigo-500',
-      onClick: () => router.push('/dashboard/teacher/statistics')
-    },
     {
       title: '단어 관리',
       description: '테스트에 사용할 영단어를 등록하고 관리하세요',
@@ -161,6 +194,13 @@ export default function TeacherDashboard({ user }) {
       icon: '📝',
       color: 'from-green-400 to-emerald-500',
       onClick: () => router.push('/dashboard/teacher/test-setup')
+    },
+    {
+      title: 'AI 자동 생성',
+      description: 'AI가 자동으로 단어와 문제를 생성해드립니다',
+      icon: '🤖',
+      color: 'from-indigo-400 to-purple-500',
+      onClick: () => router.push('/dashboard/teacher/auto-quiz-generator')
     },
     {
       title: '학생 목록',
@@ -185,7 +225,7 @@ export default function TeacherDashboard({ user }) {
       </div>
 
       {/* 메뉴 카드들 */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-12">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-12 justify-items-center">
         {menuItems.map((item, index) => (
           <div
             key={index}
@@ -249,13 +289,18 @@ export default function TeacherDashboard({ user }) {
                       onClick={() => startEdit(test)}
                       className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl transition-colors"
                     >
-                      ✏️ 보기/수정
+                      👁️ 보기
                     </button>
                     <button
                       onClick={() => deleteTest(test.id)}
-                      className="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded-xl transition-colors"
+                      disabled={deletingQuizIds.has(test.id)}
+                      className={`px-4 py-2 rounded-xl transition-colors ${
+                        deletingQuizIds.has(test.id)
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-red-400 hover:bg-red-500 text-white'
+                      }`}
                     >
-                      🗑️ 삭제
+                      {deletingQuizIds.has(test.id) ? '삭제 중...' : '🗑️ 삭제'}
                     </button>
                   </div>
                 </div>

@@ -30,11 +30,25 @@ export default function StudentManagement({ user, onBack }) {
         const allUsers = await userService.getUsers();
         console.log('모든 사용자 데이터:', allUsers);
         
-        // 학생만 필터링 (userType이 STUDENT인 사용자들)
+        // 학생만 필터링 (userType이 STUDENT이고 ACTIVE 상태인 사용자들만)
         const studentUsers = allUsers.filter(user => 
-          user.userType === 'STUDENT' || user.role === 'student'
+          (user.userType === 'STUDENT' || user.role === 'student') &&
+          user.status === 'ACTIVE'
         );
-        console.log('필터링된 학생 데이터:', studentUsers);
+        console.log('필터링된 학생 데이터 (ACTIVE만):', studentUsers);
+        
+        // 제외된 학생들 로그로 확인 (ACTIVE가 아닌 모든 상태)
+        const excludedStudents = allUsers.filter(user => 
+          (user.userType === 'STUDENT' || user.role === 'student') &&
+          user.status !== 'ACTIVE'
+        );
+        if (excludedStudents.length > 0) {
+          console.log('제외된 학생들 (ACTIVE가 아님):', excludedStudents.map(s => ({
+            id: s.id,
+            name: s.name,
+            status: s.status
+          })));
+        }
         
         // 각 학생의 상세 정보 로깅
         studentUsers.forEach(student => {
@@ -47,18 +61,32 @@ export default function StudentManagement({ user, onBack }) {
           console.log('- 전체 객체:', student);
         });
         
-        // 각 학생의 퀴즈 성적 정보 가져오기
-        const studentsWithStats = await Promise.all(
+        // 각 학생의 퀴즈 성적 정보 가져오기 (오류 발생 시에도 계속 진행)
+        const studentsWithStats = await Promise.allSettled(
           studentUsers.map(async (student) => {
             try {
               console.log(`\n=== 학생 ${student.id} (${student.userInfo?.name || student.name}) 퀴즈 데이터 로드 중 ===`);
               
               // 학생의 완료된 퀴즈 목록 가져오기
-              const completedQuizzes = await quizTakingService.getCompletedQuizzes(student.id);
-              console.log(`학생 ${student.id}의 완료된 퀴즈:`, completedQuizzes);
+              let completedQuizzes = [];
+              try {
+                completedQuizzes = await quizTakingService.getCompletedQuizzes(student.id);
+                console.log(`학생 ${student.id}의 완료된 퀴즈:`, completedQuizzes);
+              } catch (quizError) {
+                console.warn(`학생 ${student.id}의 퀴즈 데이터를 가져올 수 없습니다:`, quizError.message);
+                // 퀴즈 데이터를 가져올 수 없어도 기본 정보는 표시
+                completedQuizzes = [];
+              }
+              
+              // 유효한 퀴즈만 필터링 (삭제된 퀴즈 제외)
+              const validQuizzes = completedQuizzes.filter(quiz => 
+                quiz && quiz.quizId && quiz.totalScore !== undefined
+              );
+              
+              console.log(`학생 ${student.id}의 유효한 퀴즈 수: ${validQuizzes.length}/${completedQuizzes.length}`);
               
               // 각 퀴즈별 점수 상세 분석
-              completedQuizzes.forEach((quiz, index) => {
+              validQuizzes.forEach((quiz, index) => {
                 console.log(`\n📊 퀴즈 ${index + 1} 상세:`, {
                   quizId: quiz.quizId,
                   quizTitle: quiz.quizTitle,
@@ -69,14 +97,14 @@ export default function StudentManagement({ user, onBack }) {
                 });
               });
               
-              // 통계 계산
-              const totalQuizzes = completedQuizzes.length;
-              const totalScore = completedQuizzes.reduce((sum, quiz) => {
+              // 통계 계산 (유효한 퀴즈만 사용)
+              const totalQuizzes = validQuizzes.length;
+              const totalScore = validQuizzes.reduce((sum, quiz) => {
                 console.log(`퀴즈 ${quiz.quizId} 점수 추가: ${quiz.totalScore || 0}`);
                 return sum + (quiz.totalScore || 0);
               }, 0);
               const averageScore = totalQuizzes > 0 ? Math.round(totalScore / totalQuizzes) : 0;
-              const passedQuizzes = completedQuizzes.filter(quiz => quiz.pass).length;
+              const passedQuizzes = validQuizzes.filter(quiz => quiz.pass).length;
               
               console.log(`\n🔢 학생 ${student.id} 계산된 통계:`, {
                 totalQuizzes,
@@ -86,16 +114,8 @@ export default function StudentManagement({ user, onBack }) {
                 calculation: `${totalScore} / ${totalQuizzes} = ${averageScore}`
               });
               
-              // 평균 점수에 따른 레벨 계산
-              const calculateLevel = (avgScore) => {
-                if (avgScore >= 80) return '상위권';
-                if (avgScore >= 60) return '중위권';
-                if (avgScore > 0) return '하위권';
-                return '미응시';
-              };
-              
-              const calculatedLevel = calculateLevel(averageScore);
-              console.log(`학생 ${student.id} 레벨 계산: ${averageScore}점 → ${calculatedLevel}`);
+              // 레벨 계산 제거 - 단순히 평균 점수만 사용
+              console.log(`학생 ${student.id} 평균 점수: ${averageScore}점`);
               
               return {
                 id: student.id,
@@ -103,20 +123,20 @@ export default function StudentManagement({ user, onBack }) {
                 name: student.userInfo?.name || student.name || '이름 없음',
                 userType: student.userType || student.role,
                 status: 'active', // 기본값
-                level: student.level || calculatedLevel, // 백엔드 레벨이 있으면 사용, 없으면 계산된 레벨 사용
+                level: student.level || '학생', // 기본값으로 '학생' 사용
                 created_at: student.createdAt || new Date().toISOString(),
                 totalScore: totalScore,
                 completedQuizzes: totalQuizzes,
                 passedQuizzes: passedQuizzes,
                 averageScore: averageScore,
-                lastActivity: completedQuizzes.length > 0 ? 
-                  completedQuizzes[completedQuizzes.length - 1].submittedAt : 
+                lastActivity: validQuizzes.length > 0 ? 
+                  validQuizzes[validQuizzes.length - 1].submittedAt : 
                   student.createdAt || new Date().toISOString()
               };
             } catch (error) {
               console.error(`❌ 학생 ${student.id}의 퀴즈 데이터 로드 오류:`, error);
               // 퀴즈 데이터를 가져올 수 없어도 기본 학생 정보는 표시
-              const defaultLevel = student.level || '미응시';
+              const defaultLevel = student.level || '학생';
               return {
                 id: student.id,
                 email: student.userInfo?.email || student.email || 'N/A',
@@ -135,24 +155,38 @@ export default function StudentManagement({ user, onBack }) {
           })
         );
         
-        console.log('통계가 추가된 학생 데이터:', studentsWithStats);
-        setStudents(studentsWithStats);
+        // Promise.allSettled 결과 처리
+        const successfulStudents = studentsWithStats
+          .filter(result => result.status === 'fulfilled')
+          .map(result => result.value);
         
-        // 통계 계산
-        const activeStudents = studentsWithStats.filter(s => s.status === 'active');
+        const failedStudents = studentsWithStats
+          .filter(result => result.status === 'rejected')
+          .map(result => result.reason);
+        
+        console.log('성공적으로 로드된 학생:', successfulStudents.length);
+        console.log('로드 실패한 학생:', failedStudents.length);
+        
+        if (failedStudents.length > 0) {
+          console.warn('일부 학생 데이터 로드 실패:', failedStudents);
+        }
+        
+        setStudents(successfulStudents);
+        
+        // 통계 계산 (상위권/중위권/하위권 제거)
+        const activeStudents = successfulStudents.filter(s => s.status === 'active');
         const scores = activeStudents.map(s => s.averageScore).filter(score => score > 0);
         const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
         
-        const sortedScores = [...scores].sort((a, b) => b - a);
-        const topCount = Math.ceil(sortedScores.length * 0.3);
-        const middleCount = Math.ceil(sortedScores.length * 0.4);
+        // 명예의 전당 계산 (평균 성적이 가장 높은 학생)
+        const topStudent = activeStudents
+          .filter(s => s.averageScore > 0)
+          .sort((a, b) => b.averageScore - a.averageScore)[0];
         
         setStats({
           totalStudents: activeStudents.length,
           averageScore: Math.round(avgScore * 10) / 10,
-          topStudents: topCount,
-          middleStudents: middleCount,
-          bottomStudents: activeStudents.length - topCount - middleCount
+          topStudent: topStudent || null
         });
         
       } catch (error) {
@@ -257,7 +291,7 @@ export default function StudentManagement({ user, onBack }) {
           </Card>
 
           {/* 통계 카드 */}
-          <div className="grid md:grid-cols-5 gap-6 mb-8">
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
             <Card className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">
                 {stats.totalStudents}
@@ -273,24 +307,13 @@ export default function StudentManagement({ user, onBack }) {
             </Card>
             
             <Card className="text-center">
-              <div className="text-3xl font-bold text-green-600 mb-2">
-                {stats.topStudents}
+              <div className="text-2xl font-bold text-yellow-600 mb-2">
+                {stats.topStudent ? stats.topStudent.name : '없음'}
               </div>
-              <div className="text-gray-700">상위권</div>
-            </Card>
-            
-            <Card className="text-center">
-              <div className="text-3xl font-bold text-yellow-600 mb-2">
-                {stats.middleStudents}
+              <div className="text-sm text-gray-600 mb-1">
+                {stats.topStudent ? `${stats.topStudent.averageScore}점` : ''}
               </div>
-              <div className="text-gray-700">중위권</div>
-            </Card>
-            
-            <Card className="text-center">
-              <div className="text-3xl font-bold text-red-600 mb-2">
-                {stats.bottomStudents}
-              </div>
-              <div className="text-gray-700">하위권</div>
+              <div className="text-gray-700">🏆 명예의 전당</div>
             </Card>
           </div>
 
@@ -306,7 +329,6 @@ export default function StudentManagement({ user, onBack }) {
                   <tr className="border-b border-gray-200">
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">학생명</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">이메일</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">레벨</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">평균 점수</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">완료한 퀴즈</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">합격한 퀴즈</th>
@@ -317,7 +339,7 @@ export default function StudentManagement({ user, onBack }) {
                 <tbody>
                   {filteredStudents.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="py-12 text-center text-gray-500">
+                      <td colSpan="7" className="py-12 text-center text-gray-500">
                         {searchTerm ? '검색 결과가 없습니다.' : '등록된 학생이 없습니다.'}
                       </td>
                     </tr>
@@ -330,11 +352,6 @@ export default function StudentManagement({ user, onBack }) {
                         </td>
                         <td className="py-4 px-4 text-gray-600">
                           {student.email}
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                            {student.level}
-                          </span>
                         </td>
                         <td className="py-4 px-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${getScoreLevel(student.averageScore)}`}>
