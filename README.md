@@ -35,6 +35,7 @@ KT의 AI 기술을 활용해 학생 개개인의 학습 수준과 스타일에 �
 - **맞춤형 학습**: 학생 수준에 맞는 문제 난이도 조절
 
 ## 🏗️ 애플리케이션 설계 및 구조
+<img width="682" height="676" alt="최종 drawio" src="https://github.com/user-attachments/assets/d3626a70-e944-417b-952b-9e542f34b451" />
 
 ### 프론트엔드 구조
 ```
