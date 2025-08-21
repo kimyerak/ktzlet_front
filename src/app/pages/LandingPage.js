@@ -24,7 +24,7 @@ export default function LandingPage() {
         {/* 메인 타이틀 */}
         <div className="mb-8">
           <h1 className="text-5xl font-bold text-gray-800 mb-4">
-            AI 교육 플랫폼 💝
+            KT AI 교육 플랫폼 'KTzlet' 💝
           </h1>
           <div className="text-2xl mb-2">🌟✨🎓✨🌟</div>
         </div>
@@ -32,8 +32,7 @@ export default function LandingPage() {
         {/* 소개 멘트 */}
         <Card className="mb-8">
           <p className="text-lg text-gray-800 leading-relaxed">
-            AI 기술을 활용해 학생 개개인의 학습 수준과 스타일에 맞춘 맞춤형 교육법을 제공하는 플랫폼으로서
-            <br />
+            KT의 AI 기술을 활용해 학생 개개인의 학습 수준과 스타일에 맞춘 맞춤형 교육법을 제공하는 플랫폼으로서,
             교사와 학생 간의 원활한 소통을 지원하여 공교육 수업 시나리오를 100% 충족시키는 서비스입니다.
           </p>
           <div className="text-3xl mt-4">💖</div>

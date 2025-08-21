@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import StudentManagement from '../../../pages/teacher/StudentManagement';
 import Header from '../../../ui/Header';
+import LoadingSpinner from '../../../ui/LoadingSpinner';
 
 export default function StudentsPage() {
   const { user, loading } = useAuth();
@@ -19,7 +20,7 @@ export default function StudentsPage() {
   }, [user, loading, router]);
 
   if (loading) {
-    return <div>로딩 중...</div>;
+    return <LoadingSpinner message="학생 목록을 불러오는 중..." fullScreen={true} />;
   }
 
   if (!user || user.type !== 'teacher') {

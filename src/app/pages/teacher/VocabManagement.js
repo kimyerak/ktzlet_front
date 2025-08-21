@@ -104,7 +104,21 @@ export default function VocabManagement({ user }) {
       loadVocabs();
     } catch (error) {
       console.error('저장 오류:', error);
-      setError('저장 중 오류가 발생했습니다.');
+      
+      // 더 구체적인 오류 메시지
+      let errorMessage = '저장 중 오류가 발생했습니다.';
+      
+      if (error.message.includes('이미 존재하는 단어입니다')) {
+        errorMessage = '이미 존재하는 단어입니다!';
+      } else if (error.message.includes('단어는 필수입니다')) {
+        errorMessage = '단어를 입력해주세요.';
+      } else if (error.message.includes('뜻은 필수입니다')) {
+        errorMessage = '단어의 뜻을 입력해주세요.';
+      } else if (error.message.includes('유효성 검사 실패')) {
+        errorMessage = '입력 정보를 확인해주세요.';
+      }
+      
+      setError(errorMessage);
     }
   };
 

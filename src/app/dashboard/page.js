@@ -24,8 +24,8 @@ export default function DashboardPage() {
   }, [user, loading, router]);
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner fullScreen={true} />;
   }
 
-  return <LoadingSpinner message="대시보드로 이동 중..." />;
+  return <LoadingSpinner message="대시보드로 이동 중..." fullScreen={true} />;
 } 

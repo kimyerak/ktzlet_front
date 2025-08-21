@@ -18,8 +18,8 @@ export default function Home() {
   }, [user, loading, router]);
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner fullScreen={true} />;
   }
 
-  return user ? <LoadingSpinner message="대시보드로 이동 중..." /> : <LandingPage />;
+  return user ? <LoadingSpinner message="대시보드로 이동 중..." fullScreen={true} /> : <LandingPage />;
 }

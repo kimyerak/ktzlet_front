@@ -108,7 +108,17 @@ export default function AutoQuizGenerator({ user, onBack }) {
       console.log('모든 단어 저장 완료:', savedVocabs);
     } catch (error) {
       console.error('단어 저장 오류:', error);
-      setError('단어 저장에 실패했습니다. 다시 시도해주세요.');
+      
+      // 더 구체적인 오류 메시지
+      let errorMessage = '단어 저장에 실패했습니다. 다시 시도해주세요.';
+      
+      if (error.message.includes('이미 존재하는 단어입니다')) {
+        errorMessage = '일부 단어가 이미 존재합니다. 다른 단어로 시도해주세요.';
+      } else if (error.message.includes('유효성 검사 실패')) {
+        errorMessage = '생성된 단어 정보에 문제가 있습니다. 다시 시도해주세요.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -220,7 +230,7 @@ export default function AutoQuizGenerator({ user, onBack }) {
             variant="primary"
             size="lg"
           >
-            {loading ? <LoadingSpinner /> : '🚀 AI 자동 생성 시작'}
+            {loading ? <LoadingSpinner message="AI가 요구사항을 분석 중..." /> : '🚀 AI 자동 생성 시작'}
           </Button>
         </div>
       </div>
@@ -255,7 +265,7 @@ export default function AutoQuizGenerator({ user, onBack }) {
             variant="primary"
             size="lg"
           >
-            {loading ? <LoadingSpinner /> : '💾 단어들을 DB에 저장'}
+            {loading ? <LoadingSpinner message="단어들을 저장 중..." /> : '💾 단어들을 DB에 저장'}
           </Button>
         </div>
       </div>
@@ -289,7 +299,7 @@ export default function AutoQuizGenerator({ user, onBack }) {
             variant="primary"
             size="lg"
           >
-            {loading ? <LoadingSpinner /> : '📝 생성된 문제 확인하기'}
+            {loading ? <LoadingSpinner message="문제를 확인 중..." /> : '📝 생성된 문제 확인하기'}
           </Button>
         </div>
       </div>
@@ -336,7 +346,7 @@ export default function AutoQuizGenerator({ user, onBack }) {
             variant="primary"
             size="lg"
           >
-            {loading ? <LoadingSpinner /> : '🎉 상세정보 설정으로 이동'}
+            {loading ? <LoadingSpinner message="페이지 이동 중..." /> : '🎉 상세정보 설정으로 이동'}
           </Button>
         </div>
       </div>
