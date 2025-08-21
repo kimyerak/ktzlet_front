@@ -47,7 +47,7 @@ export default function TestSetup({ onNext, onBack, initialConfig }) {
   const handlePeriodChange = (type, value) => {
     setTestConfig(prev => ({
       ...prev,
-      [type]: value
+      [type]: value || '' // null 값을 빈 문자열로 변환
     }));
   };
 
@@ -114,7 +114,7 @@ export default function TestSetup({ onNext, onBack, initialConfig }) {
                 </label>
                 <input
                   type="text"
-                  value={testConfig.title}
+                  value={testConfig.title || ''}
                   onChange={(e) => handleChange('title', e.target.value)}
                   placeholder="예: Chapter 1 Vocab Test"
                   className={`w-full px-4 py-3 rounded-2xl border-2 outline-none transition-all text-gray-800 ${
@@ -136,7 +136,7 @@ export default function TestSetup({ onNext, onBack, initialConfig }) {
                     type="range"
                     min="2"
                     max="50"
-                    value={testConfig.numofquestion}
+                    value={testConfig.numofquestion || 10}
                     onChange={(e) => handleChange('numofquestion', parseInt(e.target.value))}
                     className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
                   />
@@ -159,7 +159,7 @@ export default function TestSetup({ onNext, onBack, initialConfig }) {
                     min="600"
                     max="10800"
                     step="300"
-                    value={testConfig.time_limit_sec}
+                    value={testConfig.time_limit_sec || 3600}
                     onChange={(e) => handleChange('time_limit_sec', parseInt(e.target.value))}
                     className="flex-1 h-2 bg-green-200 rounded-lg appearance-none cursor-pointer"
                   />
@@ -182,7 +182,7 @@ export default function TestSetup({ onNext, onBack, initialConfig }) {
                     <label className="block text-sm text-gray-700 mb-1">시작일</label>
                     <input
                       type="datetime-local"
-                      value={testConfig.open_at}
+                      value={testConfig.open_at || ''}
                       onChange={(e) => handlePeriodChange('open_at', e.target.value)}
                       className={`w-full px-4 py-3 rounded-2xl border-2 outline-none transition-all text-gray-800 ${
                         errors.startDate ? 'border-red-500' : 'border-gray-300 focus:border-blue-500'
@@ -196,7 +196,7 @@ export default function TestSetup({ onNext, onBack, initialConfig }) {
                     <label className="block text-sm text-gray-700 mb-1">마감일</label>
                     <input
                       type="datetime-local"
-                      value={testConfig.close_at}
+                      value={testConfig.close_at || ''}
                       onChange={(e) => handlePeriodChange('close_at', e.target.value)}
                       className={`w-full px-4 py-3 rounded-2xl border-2 outline-none transition-all text-gray-800 ${
                         errors.endDate ? 'border-red-500' : 'border-gray-300 focus:border-blue-500'
@@ -220,7 +220,7 @@ export default function TestSetup({ onNext, onBack, initialConfig }) {
                     min="30"
                     max="100"
                     step="5"
-                    value={testConfig.target_score}
+                    value={testConfig.target_score || 70}
                     onChange={(e) => handleChange('target_score', parseInt(e.target.value))}
                     className="flex-1 h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer"
                   />
@@ -247,7 +247,7 @@ export default function TestSetup({ onNext, onBack, initialConfig }) {
               onClick={handleNext}
               className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-8 rounded-2xl hover:shadow-lg transform hover:scale-105 transition-all duration-200"
             >
-              다음 단계 → 문제 작성하기 📝
+              다음 단계 → 단어 선택하기 📚
             </button>
           </div>
         </div>

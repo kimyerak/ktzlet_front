@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import TestSetup from './TestSetup';
 import TestCreation from './TestCreation';
 import StudentManagement from './StudentManagement';
+import { quizService } from '../../services/apiService';
 
 export default function TeacherDashboard({ user }) {
   const router = useRouter();
@@ -14,13 +15,26 @@ export default function TeacherDashboard({ user }) {
   const [mode, setMode] = useState('create'); // 'create' | 'edit'
   const [editingTestId, setEditingTestId] = useState(null);
 
-  // 로컬 스토리지에서 테스트 목록 불러오기
+  // 백엔드에서 퀴즈 목록 불러오기
   useEffect(() => {
+    const loadQuizzes = async () => {
+      try {
+        if (user?.id) {
+          const quizzes = await quizService.getQuizzesByTeacher(user.id);
+          setCreatedTests(quizzes);
+        }
+      } catch (error) {
+        console.error('퀴즈 목록 로드 오류:', error);
+        // 백엔드 연결 실패 시 로컬 스토리지에서 불러오기
     const savedTests = localStorage.getItem('createdTests');
     if (savedTests) {
       setCreatedTests(JSON.parse(savedTests));
     }
-  }, []);
+      }
+    };
+    
+    loadQuizzes();
+  }, [user?.id]);
 
   // 테스트 저장 (생성/수정 공용)
   const saveTest = (testData) => {
@@ -74,19 +88,56 @@ export default function TeacherDashboard({ user }) {
   };
 
   // 편집 시작
-  const startEdit = (test) => {
-    // 테스트 설정 페이지로 이동하면서 기존 데이터 전달
+  const startEdit = async (test) => {
+    try {
+      // 퀴즈 상세 정보 가져오기 (questions 포함)
+      const quizDetail = await quizService.getQuizById(test.id);
+      
+      const questions = quizDetail.questions || [];
+      console.log(`퀴즈 ${test.id}의 문제 수: ${questions.length}`);
+      
+      // 프론트엔드 형식으로 변환
     const configData = {
-      id: test.id,
-      title: test.title || test.subject,
-      numofquestion: test.numofquestion || test.questionCount,
-      time_limit_sec: test.time_limit_sec || (test.timeLimit * 60),
-      open_at: test.open_at || test.examPeriod?.start,
-      close_at: test.close_at || test.examPeriod?.end,
-      target_score: test.target_score || test.passingScore,
-      questions: test.questions
-    };
+        id: quizDetail.id,
+        title: quizDetail.title,
+        numofquestion: quizDetail.numOfQuestions,
+        time_limit_sec: quizDetail.timeLimitSec,
+        open_at: quizDetail.openAt,
+        close_at: quizDetail.closeAt,
+        target_score: quizDetail.targetScore,
+        questions: questions.map(q => {
+          // 백엔드 타입을 프론트엔드 타입으로 매핑
+          let frontendType;
+          switch (q.type) {
+            case 'DICTATION':
+              frontendType = 'dictation';
+              break;
+            case 'OX':
+              frontendType = 'ox';
+              break;
+            case 'MULTIPLE':
+              frontendType = 'multiple';
+              break;
+            default:
+              frontendType = 'dictation';
+          }
+          
+          return {
+            id: q.id,
+            type: frontendType,
+            question: q.stem,
+            correctAnswer: q.correctAnswer,
+            explanation: q.explanation || '',
+            points: q.points
+          };
+        })
+      };
+      
     router.push(`/dashboard/teacher/test-setup?edit=${encodeURIComponent(JSON.stringify(configData))}`);
+    } catch (error) {
+      console.error('퀴즈 정보 로드 오류:', error);
+      alert('퀴즈 정보를 불러오는 중 오류가 발생했습니다.');
+    }
   };
 
   const menuItems = [
@@ -96,6 +147,13 @@ export default function TeacherDashboard({ user }) {
       icon: '📊',
       color: 'from-blue-400 to-indigo-500',
       onClick: () => router.push('/dashboard/teacher/statistics')
+    },
+    {
+      title: '단어 관리',
+      description: '테스트에 사용할 영단어를 등록하고 관리하세요',
+      icon: '📚',
+      color: 'from-amber-400 to-orange-500',
+      onClick: () => router.push('/dashboard/teacher/vocab')
     },
     {
       title: '테스트 제작',
@@ -127,7 +185,7 @@ export default function TeacherDashboard({ user }) {
       </div>
 
       {/* 메뉴 카드들 */}
-      <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-12">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-12">
         {menuItems.map((item, index) => (
           <div
             key={index}
@@ -180,10 +238,10 @@ export default function TeacherDashboard({ user }) {
                       </h4>
                     </button>
                     <div className="flex items-center space-x-4 text-sm text-gray-700">
-                      <span>📊 {test.numofquestion || test.questionCount}문제</span>
-                      <span>⏰ {Math.floor((test.time_limit_sec || test.timeLimit * 60) / 60)}분</span>
-                      <span>🎯 합격점수 {test.target_score || test.passingScore}점</span>
-                      <span>📅 {new Date(test.createdAt).toLocaleDateString()}</span>
+                      <span>📊 {test.numOfQuestions || test.numofquestion || test.questionCount || 0}문제</span>
+                      <span>⏰ {Math.floor((test.timeLimitSec || test.time_limit_sec || test.timeLimit * 60 || 0) / 60)}분</span>
+                      <span>🎯 합격점수 {test.targetScore || test.target_score || test.passingScore || 0}점</span>
+                      <span>📅 {new Date(test.createdAt || test.updatedAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                   <div className="flex space-x-2">

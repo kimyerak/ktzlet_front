@@ -1,0 +1,180 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dineug/erd-editor/main/json-schema/schema.json",
+  "version": "3.0.0",
+  "settings": {
+    "width": 4000,
+    "height": 3000,
+    "scrollTop": 0,
+    "scrollLeft": 0,
+    "zoomLevel": 1,
+    "show": 511,
+    "canvasType": "ERD",
+    "language": 16,
+    "tableNameCase": 1,
+    "columnNameCase": 1,
+    "bracketType": 1,
+    "relationshipDataTypeSync": true,
+    "relationshipOptimization": true,
+    "columnOrder": 0,
+    "maxWidthComment": 240
+  },
+  "doc": {
+    "tableIds": [
+      "tbl_teacher",
+      "tbl_student",
+      "tbl_vocab",
+      "tbl_quiz",
+      "tbl_question",
+      "tbl_qps",
+      "tbl_makeup_exam",
+      "tbl_wrong_vocab"
+    ],
+    "relationshipIds": [
+      "rel_quiz_teacher",
+      "rel_question_quiz",
+      "rel_question_vocab",
+      "rel_qps_quiz",
+      "rel_qps_student",
+      "rel_me_qps",
+      "rel_wv_student",
+      "rel_wv_vocab"
+    ],
+    "indexIds": [],
+    "memoIds": []
+  },
+  "collections": {
+    "tableEntities": {
+      "tbl_teacher": {
+        "id": "tbl_teacher",
+        "name": "teacher",
+        "columnIds": ["col_teacher_id","col_teacher_email","col_teacher_name","col_teacher_role","col_teacher_status","col_teacher_created_at"],
+        "seqColumnIds": ["col_teacher_id","col_teacher_email","col_teacher_name","col_teacher_role","col_teacher_status","col_teacher_created_at"],
+        "ui": {"x":200,"y":100,"zIndex":1,"widthName":140,"color":"#ffffff"}
+      },
+      "tbl_student": {
+        "id": "tbl_student",
+        "name": "student",
+        "columnIds": ["col_student_id","col_student_email","col_student_name","col_student_role","col_student_status","col_student_created_at"],
+        "seqColumnIds": ["col_student_id","col_student_email","col_student_name","col_student_role","col_student_status","col_student_created_at"],
+        "ui": {"x":200,"y":500,"zIndex":1,"widthName":140,"color":"#ffffff"}
+      },
+      "tbl_vocab": {
+        "id": "tbl_vocab",
+        "name": "vocab",
+        "columnIds": ["col_vocab_id","col_vocab_word","col_vocab_language","col_vocab_created_at"],
+        "seqColumnIds": ["col_vocab_id","col_vocab_word","col_vocab_language","col_vocab_created_at"],
+        "ui": {"x":200,"y":900,"zIndex":1,"widthName":140,"color":"#ffffff"}
+      },
+      "tbl_quiz": {
+        "id": "tbl_quiz",
+        "name": "quiz",
+        "columnIds": ["col_quiz_id","col_quiz_title","col_quiz_description","col_quiz_open_at","col_quiz_close_at","col_quiz_time_limit_sec","col_quiz_target_score","col_quiz_created_by","col_quiz_created_at"],
+        "seqColumnIds": ["col_quiz_id","col_quiz_title","col_quiz_description","col_quiz_open_at","col_quiz_close_at","col_quiz_time_limit_sec","col_quiz_target_score","col_quiz_created_by","col_quiz_created_at"],
+        "ui": {"x":750,"y":100,"zIndex":1,"widthName":160,"color":"#ffffff"}
+      },
+      "tbl_question": {
+        "id": "tbl_question",
+        "name": "question",
+        "columnIds": ["col_question_id","col_question_quiz_id","col_question_type","col_question_stem","col_question_correct_answer","col_question_explanation","col_question_points","col_question_vocab_id","col_question_created_at"],
+        "seqColumnIds": ["col_question_id","col_question_quiz_id","col_question_type","col_question_stem","col_question_correct_answer","col_question_explanation","col_question_points","col_question_vocab_id","col_question_created_at"],
+        "ui": {"x":1100,"y":350,"zIndex":1,"widthName":170,"color":"#ffffff"}
+      },
+      "tbl_qps": {
+        "id": "tbl_qps",
+        "name": "quiz_per_student",
+        "columnIds": ["col_qps_id","col_qps_quiz_id","col_qps_student_id","col_qps_assigned_at","col_qps_started_at","col_qps_submitted_at","col_qps_total_score","col_qps_pass","col_qps_status"],
+        "seqColumnIds": ["col_qps_id","col_qps_quiz_id","col_qps_student_id","col_qps_assigned_at","col_qps_started_at","col_qps_submitted_at","col_qps_total_score","col_qps_pass","col_qps_status"],
+        "ui": {"x":750,"y":650,"zIndex":1,"widthName":200,"color":"#ffffff"}
+      },
+      "tbl_makeup_exam": {
+        "id": "tbl_makeup_exam",
+        "name": "makeup_exam",
+        "columnIds": ["col_me_id","col_me_qps_id","col_me_reason","col_me_scheduled_at","col_me_started_at","col_me_completed_at","col_me_score","col_me_status"],
+        "seqColumnIds": ["col_me_id","col_me_qps_id","col_me_reason","col_me_scheduled_at","col_me_started_at","col_me_completed_at","col_me_score","col_me_status"],
+        "ui": {"x":450,"y":900,"zIndex":1,"widthName":170,"color":"#ffffff"}
+      },
+      "tbl_wrong_vocab": {
+        "id": "tbl_wrong_vocab",
+        "name": "wrong_vocab",
+        "columnIds": ["col_wv_id","col_wv_student_id","col_wv_vocab_id","col_wv_wrong_count","col_wv_last_wrong_at"],
+        "seqColumnIds": ["col_wv_id","col_wv_student_id","col_wv_vocab_id","col_wv_wrong_count","col_wv_last_wrong_at"],
+        "ui": {"x":1450,"y":900,"zIndex":1,"widthName":170,"color":"#ffffff"}
+      }
+    },
+    "tableColumnEntities": {
+      "col_teacher_id": {"id":"col_teacher_id","tableId":"tbl_teacher","name":"teacher_id","dataType":"bigint"},
+      "col_teacher_email": {"id":"col_teacher_email","tableId":"tbl_teacher","name":"email","dataType":"varchar(255)"},
+      "col_teacher_name": {"id":"col_teacher_name","tableId":"tbl_teacher","name":"name","dataType":"varchar(100)"},
+      "col_teacher_role": {"id":"col_teacher_role","tableId":"tbl_teacher","name":"role","dataType":"varchar(20)"},
+      "col_teacher_status": {"id":"col_teacher_status","tableId":"tbl_teacher","name":"status","dataType":"varchar(20)"},
+      "col_teacher_created_at": {"id":"col_teacher_created_at","tableId":"tbl_teacher","name":"created_at","dataType":"datetime"},
+
+      "col_student_id": {"id":"col_student_id","tableId":"tbl_student","name":"student_id","dataType":"bigint"},
+      "col_student_email": {"id":"col_student_email","tableId":"tbl_student","name":"email","dataType":"varchar(255)"},
+      "col_student_name": {"id":"col_student_name","tableId":"tbl_student","name":"name","dataType":"varchar(100)"},
+      "col_student_role": {"id":"col_student_role","tableId":"tbl_student","name":"role","dataType":"varchar(20)"},
+      "col_student_status": {"id":"col_student_status","tableId":"tbl_student","name":"status","dataType":"varchar(20)"},
+      "col_student_created_at": {"id":"col_student_created_at","tableId":"tbl_student","name":"created_at","dataType":"datetime"},
+
+      "col_vocab_id": {"id":"col_vocab_id","tableId":"tbl_vocab","name":"vocab_id","dataType":"bigint"},
+      "col_vocab_word": {"id":"col_vocab_word","tableId":"tbl_vocab","name":"word","dataType":"varchar(100)"},
+      "col_vocab_language": {"id":"col_vocab_language","tableId":"tbl_vocab","name":"language","dataType":"varchar(10)"},
+      "col_vocab_created_at": {"id":"col_vocab_created_at","tableId":"tbl_vocab","name":"created_at","dataType":"datetime"},
+
+      "col_quiz_id": {"id":"col_quiz_id","tableId":"tbl_quiz","name":"quiz_id","dataType":"bigint"},
+      "col_quiz_title": {"id":"col_quiz_title","tableId":"tbl_quiz","name":"title","dataType":"varchar(200)"},
+      "col_quiz_description": {"id":"col_quiz_description","tableId":"tbl_quiz","name":"description","dataType":"text"},
+      "col_quiz_open_at": {"id":"col_quiz_open_at","tableId":"tbl_quiz","name":"open_at","dataType":"datetime"},
+      "col_quiz_close_at": {"id":"col_quiz_close_at","tableId":"tbl_quiz","name":"close_at","dataType":"datetime"},
+      "col_quiz_time_limit_sec": {"id":"col_quiz_time_limit_sec","tableId":"tbl_quiz","name":"time_limit_sec","dataType":"int"},
+      "col_quiz_target_score": {"id":"col_quiz_target_score","tableId":"tbl_quiz","name":"target_score","dataType":"int"},
+      "col_quiz_created_by": {"id":"col_quiz_created_by","tableId":"tbl_quiz","name":"created_by","dataType":"bigint"},
+      "col_quiz_created_at": {"id":"col_quiz_created_at","tableId":"tbl_quiz","name":"created_at","dataType":"datetime"},
+
+      "col_question_id": {"id":"col_question_id","tableId":"tbl_question","name":"question_id","dataType":"bigint"},
+      "col_question_quiz_id": {"id":"col_question_quiz_id","tableId":"tbl_question","name":"quiz_id","dataType":"bigint"},
+      "col_question_type": {"id":"col_question_type","tableId":"tbl_question","name":"type","dataType":"varchar(10)"},
+      "col_question_stem": {"id":"col_question_stem","tableId":"tbl_question","name":"stem","dataType":"text"},
+      "col_question_correct_answer": {"id":"col_question_correct_answer","tableId":"tbl_question","name":"correct_answer","dataType":"text"},
+      "col_question_explanation": {"id":"col_question_explanation","tableId":"tbl_question","name":"explanation","dataType":"text"},
+      "col_question_points": {"id":"col_question_points","tableId":"tbl_question","name":"points","dataType":"int"},
+      "col_question_vocab_id": {"id":"col_question_vocab_id","tableId":"tbl_question","name":"vocab_id","dataType":"bigint"},
+      "col_question_created_at": {"id":"col_question_created_at","tableId":"tbl_question","name":"created_at","dataType":"datetime"},
+
+      "col_qps_id": {"id":"col_qps_id","tableId":"tbl_qps","name":"qps_id","dataType":"bigint"},
+      "col_qps_quiz_id": {"id":"col_qps_quiz_id","tableId":"tbl_qps","name":"quiz_id","dataType":"bigint"},
+      "col_qps_student_id": {"id":"col_qps_student_id","tableId":"tbl_qps","name":"student_id","dataType":"bigint"},
+      "col_qps_assigned_at": {"id":"col_qps_assigned_at","tableId":"tbl_qps","name":"assigned_at","dataType":"datetime"},
+      "col_qps_started_at": {"id":"col_qps_started_at","tableId":"tbl_qps","name":"started_at","dataType":"datetime"},
+      "col_qps_submitted_at": {"id":"col_qps_submitted_at","tableId":"tbl_qps","name":"submitted_at","dataType":"datetime"},
+      "col_qps_total_score": {"id":"col_qps_total_score","tableId":"tbl_qps","name":"total_score","dataType":"int"},
+      "col_qps_pass": {"id":"col_qps_pass","tableId":"tbl_qps","name":"pass","dataType":"boolean"},
+      "col_qps_status": {"id":"col_qps_status","tableId":"tbl_qps","name":"status","dataType":"varchar(30)"},
+
+      "col_me_id": {"id":"col_me_id","tableId":"tbl_makeup_exam","name":"me_id","dataType":"bigint"},
+      "col_me_qps_id": {"id":"col_me_qps_id","tableId":"tbl_makeup_exam","name":"qps_id","dataType":"bigint"},
+      "col_me_reason": {"id":"col_me_reason","tableId":"tbl_makeup_exam","name":"reason","dataType":"text"},
+      "col_me_scheduled_at": {"id":"col_me_scheduled_at","tableId":"tbl_makeup_exam","name":"scheduled_at","dataType":"datetime"},
+      "col_me_started_at": {"id":"col_me_started_at","tableId":"tbl_makeup_exam","name":"started_at","dataType":"datetime"},
+      "col_me_completed_at": {"id":"col_me_completed_at","tableId":"tbl_makeup_exam","name":"completed_at","dataType":"datetime"},
+      "col_me_score": {"id":"col_me_score","tableId":"tbl_makeup_exam","name":"score","dataType":"int"},
+      "col_me_status": {"id":"col_me_status","tableId":"tbl_makeup_exam","name":"status","dataType":"varchar(30)"},
+
+      "col_wv_id": {"id":"col_wv_id","tableId":"tbl_wrong_vocab","name":"wv_id","dataType":"bigint"},
+      "col_wv_student_id": {"id":"col_wv_student_id","tableId":"tbl_wrong_vocab","name":"student_id","dataType":"bigint"},
+      "col_wv_vocab_id": {"id":"col_wv_vocab_id","tableId":"tbl_wrong_vocab","name":"vocab_id","dataType":"bigint"},
+      "col_wv_wrong_count": {"id":"col_wv_wrong_count","tableId":"tbl_wrong_vocab","name":"wrong_count","dataType":"int"},
+      "col_wv_last_wrong_at": {"id":"col_wv_last_wrong_at","tableId":"tbl_wrong_vocab","name":"last_wrong_at","dataType":"datetime"}
+    },
+    "relationshipEntities": {
+      "rel_quiz_teacher": {"id":"rel_quiz_teacher","startTableId":"tbl_teacher","startColumnIds":["col_teacher_id"],"endTableId":"tbl_quiz","endColumnIds":["col_quiz_created_by"],"type":"ZeroOneN"},
+      "rel_question_quiz": {"id":"rel_question_quiz","startTableId":"tbl_quiz","startColumnIds":["col_quiz_id"],"endTableId":"tbl_question","endColumnIds":["col_question_quiz_id"],"type":"ZeroOneN"},
+      "rel_question_vocab": {"id":"rel_question_vocab","startTableId":"tbl_vocab","startColumnIds":["col_vocab_id"],"endTableId":"tbl_question","endColumnIds":["col_question_vocab_id"],"type":"ZeroOneN"},
+      "rel_qps_quiz": {"id":"rel_qps_quiz","startTableId":"tbl_quiz","startColumnIds":["col_quiz_id"],"endTableId":"tbl_qps","endColumnIds":["col_qps_quiz_id"],"type":"ZeroOneN"},
+      "rel_qps_student": {"id":"rel_qps_student","startTableId":"tbl_student","startColumnIds":["col_student_id"],"endTableId":"tbl_qps","endColumnIds":["col_qps_student_id"],"type":"ZeroOneN"},
+      "rel_me_qps": {"id":"rel_me_qps","startTableId":"tbl_qps","startColumnIds":["col_qps_id"],"endTableId":"tbl_makeup_exam","endColumnIds":["col_me_qps_id"],"type":"ZeroOneN"},
+      "rel_wv_student": {"id":"rel_wv_student","startTableId":"tbl_student","startColumnIds":["col_student_id"],"endTableId":"tbl_wrong_vocab","endColumnIds":["col_wv_student_id"],"type":"ZeroOneN"},
+      "rel_wv_vocab": {"id":"rel_wv_vocab","startTableId":"tbl_vocab","startColumnIds":["col_vocab_id"],"endTableId":"tbl_wrong_vocab","endColumnIds":["col_wv_vocab_id"],"type":"ZeroOneN"}
+    }
+  }
+}

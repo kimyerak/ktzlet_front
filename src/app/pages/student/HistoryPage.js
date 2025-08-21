@@ -13,6 +13,13 @@ export default function HistoryPage({ user, onBack }) {
     // 로컬 스토리지에서 완료된 테스트와 사용 가능한 테스트 목록 불러오기
     const completed = JSON.parse(localStorage.getItem('completedTests') || '[]');
     const available = JSON.parse(localStorage.getItem('availableTests') || '[]');
+    
+    console.log('HistoryPage - 로드된 데이터:', {
+      completed: completed.length,
+      available: available.length,
+      completedData: completed
+    });
+    
     setCompletedTests(completed);
     setAvailableTests(available);
   }, []);
@@ -20,14 +27,26 @@ export default function HistoryPage({ user, onBack }) {
   // 완료된 테스트에 원본 테스트 정보 추가
   const getCompletedTestsWithDetails = () => {
     return completedTests.map(completed => {
-      const originalTest = availableTests.find(test => test.id === completed.testId);
+      // StudentDashboard의 데이터 구조 사용
+      const hasScore = completed.score;
+      const originalTest = availableTests.find(test => 
+        test.id === completed.testId || 
+        test.quizId === completed.testId
+      );
+      
       return {
         ...completed,
         originalTest,
-        testTitle: originalTest ? originalTest.subject : '알 수 없는 테스트',
-        questionCount: originalTest ? originalTest.questionCount : 0,
-        timeLimit: originalTest ? originalTest.timeLimit : 0,
-        passingScore: originalTest ? originalTest.passingScore : 0
+        testTitle: completed.title || originalTest?.title || originalTest?.quizTitle || originalTest?.subject || '알 수 없는 테스트',
+        questionCount: hasScore ? hasScore.totalQuestions : (originalTest?.questionCount || originalTest?.numOfQuestions || 0),
+        timeLimit: originalTest ? (originalTest.timeLimit || Math.floor((originalTest.timeLimitSec || 1800) / 60)) : 0,
+        passingScore: originalTest ? (originalTest.passingScore || originalTest.targetScore || originalTest.target_score || 70) : 70,
+        totalScore: hasScore ? hasScore.earnedPoints : 0,
+        maxScore: hasScore ? hasScore.totalPoints : (originalTest?.questionCount || 0) * 10,
+        percentage: hasScore ? hasScore.percentage : 0,
+        pass: hasScore ? (hasScore.percentage >= (hasScore.passingScore || originalTest?.passingScore || 70)) : false,
+        correctAnswers: hasScore ? hasScore.correctAnswers : 0,
+        timeSpent: completed.timeSpent || 0
       };
     }).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)); // 최신순 정렬
   };
@@ -51,10 +70,17 @@ export default function HistoryPage({ user, onBack }) {
     if (completedTestsWithDetails.length === 0) return null;
 
     const totalTests = completedTestsWithDetails.length;
-    const totalScore = completedTestsWithDetails.reduce((sum, test) => sum + test.totalScore, 0);
-    const averageScore = Math.round(totalScore / totalTests);
-    const passedTests = completedTestsWithDetails.filter(test => test.pass).length;
-    const passRate = Math.round((passedTests / totalTests) * 100);
+    
+    // 유효한 점수가 있는 테스트만 계산
+    const testsWithScore = completedTestsWithDetails.filter(test => 
+      test.percentage !== undefined && test.percentage !== null && !isNaN(test.percentage)
+    );
+    
+    const totalPercentage = testsWithScore.reduce((sum, test) => sum + test.percentage, 0);
+    const averageScore = testsWithScore.length > 0 ? Math.round(totalPercentage / testsWithScore.length) : 0;
+    
+    const passedTests = completedTestsWithDetails.filter(test => test.pass === true).length;
+    const passRate = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
 
     return {
       totalTests,
@@ -67,6 +93,7 @@ export default function HistoryPage({ user, onBack }) {
   const statistics = getStatistics();
 
   const handleTestDetail = (test) => {
+    console.log('상세보기 클릭:', test);
     setSelectedTest(test);
     setShowDetail(true);
   };
@@ -74,7 +101,7 @@ export default function HistoryPage({ user, onBack }) {
   const renderTestDetail = () => {
     if (!selectedTest) return null;
 
-    const grade = getGrade(selectedTest.totalScore, selectedTest.originalTest?.questionCount * 10 || 100);
+    const grade = getGrade(selectedTest.totalScore, selectedTest.maxScore || 100);
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -93,83 +120,163 @@ export default function HistoryPage({ user, onBack }) {
             {/* 테스트 기본 정보 */}
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
               <h4 className="text-xl font-bold text-gray-800 mb-4">
-                {selectedTest.testTitle} 테스트
+                {selectedTest.testTitle}
               </h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-600">응시일:</span>
-                  <span className="ml-2 font-semibold">
+                  <span className="text-gray-800 font-medium">응시일:</span>
+                  <span className="ml-2 font-semibold text-gray-900">
                     {new Date(selectedTest.submittedAt).toLocaleDateString()}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600">소요시간:</span>
-                  <span className="ml-2 font-semibold">
-                    {Math.round((new Date(selectedTest.submittedAt) - new Date(selectedTest.startedAt)) / 1000 / 60)}분
+                  <span className="text-gray-800 font-medium">소요시간:</span>
+                  <span className="ml-2 font-semibold text-gray-900">
+                    {Math.round((selectedTest.timeSpent || 0) / 60) || 0}분
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600">문제수:</span>
-                  <span className="ml-2 font-semibold">{selectedTest.questionCount}문제</span>
+                  <span className="text-gray-800 font-medium">문제 수:</span>
+                  <span className="ml-2 font-semibold text-gray-900">{selectedTest.questionCount || 0}문제</span>
                 </div>
                 <div>
-                  <span className="text-gray-600">제한시간:</span>
-                  <span className="ml-2 font-semibold">{selectedTest.timeLimit}분</span>
+                  <span className="text-gray-800 font-medium">합격점수:</span>
+                  <span className="ml-2 font-semibold text-gray-900">{selectedTest.passingScore || 70}점</span>
                 </div>
               </div>
             </div>
 
-            {/* 성적 정보 */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-xl">
-                <div className="text-3xl font-bold text-blue-600">{selectedTest.totalScore}점</div>
-                <div className="text-sm text-gray-600">총점</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-xl">
-                <div className={`text-3xl font-bold ${grade.color}`}>{grade.grade}</div>
-                <div className="text-sm text-gray-600">등급</div>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded-xl">
-                <div className={`text-3xl font-bold ${selectedTest.pass ? 'text-green-600' : 'text-red-600'}`}>
-                  {selectedTest.pass ? '합격' : '불합격'}
+            {/* 점수 정보 */}
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6">
+              <h4 className="text-lg font-bold text-gray-800 mb-4">📊 성적 결과</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">{selectedTest.percentage || 0}점</div>
+                  <div className="text-sm text-gray-800 font-medium">총점</div>
                 </div>
-                <div className="text-sm text-gray-600">결과</div>
+                <div className="text-center">
+                  <div className={`text-3xl font-bold mb-2 ${grade.color}`}>{grade.grade}</div>
+                  <div className="text-sm text-gray-800 font-medium">성적</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600 mb-2">{selectedTest.correctAnswers || 0}</div>
+                  <div className="text-sm text-gray-800 font-medium">정답 수</div>
+                </div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold mb-2 ${
+                    selectedTest.pass ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {selectedTest.pass ? '합격' : '불합격'}
+                  </div>
+                  <div className="text-sm text-gray-800 font-medium">결과</div>
+                </div>
               </div>
             </div>
 
-            {/* 문제별 결과 (샘플) */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h5 className="font-semibold text-gray-800 mb-4">📝 문제별 결과</h5>
-              <div className="space-y-3">
-                {Array.from({ length: Math.min(5, selectedTest.questionCount) }, (_, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-white rounded-lg">
-                    <span className="font-medium">문제 {i + 1}</span>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        Math.random() > 0.3 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {Math.random() > 0.3 ? '정답' : '오답'}
-                      </span>
-                      <span className="text-sm text-gray-600">10점</span>
-                    </div>
-                  </div>
-                ))}
-                {selectedTest.questionCount > 5 && (
-                  <div className="text-center text-gray-500 text-sm">
-                    ... 외 {selectedTest.questionCount - 5}문제
-                  </div>
-                )}
+            {/* 틀린 문제 분석 */}
+            {selectedTest.score && (
+              <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl p-6">
+                <h4 className="text-lg font-bold text-gray-800 mb-4">❌ 틀린 문제 분석</h4>
+                {(() => {
+                  const wrongCount = (selectedTest.questionCount || 0) - (selectedTest.correctAnswers || 0);
+                  
+                  if (wrongCount === 0) {
+                    return (
+                      <div className="text-center py-4">
+                        <div className="text-2xl mb-2">🎉</div>
+                        <p className="text-green-600 font-medium">모든 문제를 맞췄습니다!</p>
+                      </div>
+                    );
+                  }
+                  
+                  // questionResults가 있으면 상세 분석, 없으면 기본 정보
+                  if (selectedTest.questionResults && selectedTest.questionResults.length > 0) {
+                    const wrongQuestions = selectedTest.questionResults.filter(q => !q.isCorrect);
+                    
+                    return (
+                      <div className="space-y-3">
+                        <div className="text-center mb-4">
+                          <span className="text-red-600 font-semibold text-lg">
+                            총 {wrongQuestions.length}개 문제를 틀렸습니다
+                          </span>
+                        </div>
+                        
+                        <div className="grid gap-3">
+                          {wrongQuestions.map((question, index) => (
+                            <div key={question.questionId} className="bg-white rounded-lg p-4 border border-red-200">
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1">
+                                    <span className="font-medium text-gray-800">문제 {index + 1}</span>
+                                    {question.vocab && (
+                                      <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                        {question.vocab.word}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-red-500 font-bold">❌</div>
+                                </div>
+                                
+                                {question.questionText && (
+                                  <div className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
+                                    <strong>문제:</strong> {question.questionText}
+                                  </div>
+                                )}
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                  <div>
+                                    <span className="text-gray-700">내 답안:</span>
+                                    <span className="ml-2 font-medium text-red-600">
+                                      {question.userAnswer === 1 ? 'O (맞음)' : 
+                                       question.userAnswer === 0 ? 'X (틀림)' : 
+                                       question.userAnswer || '답안 없음'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-700">정답:</span>
+                                    <span className="ml-2 font-medium text-green-600">
+                                      {question.correctAnswer === 1 ? 'O (맞음)' : 
+                                       question.correctAnswer === 0 ? 'X (틀림)' : 
+                                       question.correctAnswer}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    // 기존 방식 (답안만 있는 경우)
+                    return (
+                      <div className="space-y-3">
+                        <div className="text-center mb-4">
+                          <span className="text-red-600 font-semibold text-lg">
+                            총 {wrongCount}개 문제를 틀렸습니다
+                          </span>
+                        </div>
+                        
+                        <div className="text-center py-4 text-gray-700">
+                          <p>이 테스트는 이전 버전으로 응시되어 상세한 오답 분석을 제공할 수 없습니다.</p>
+                          <p className="text-sm mt-1">새로운 테스트부터는 상세한 오답 분석을 제공합니다.</p>
+                        </div>
+                      </div>
+                    );
+                  }
+                })()}
               </div>
-            </div>
-          </div>
+            )}
 
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => setShowDetail(false)}
-              className="bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold py-3 px-8 rounded-xl hover:shadow-lg transition-all duration-200"
-            >
-              닫기
-            </button>
+            {/* 닫기 버튼 */}
+            <div className="text-center">
+              <button
+                onClick={() => setShowDetail(false)}
+                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl transition-colors"
+              >
+                닫기
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -224,22 +331,27 @@ export default function HistoryPage({ user, onBack }) {
             <div className="text-6xl mb-4">📝</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">아직 응시한 테스트가 없습니다</h3>
             <p className="text-gray-600">테스트를 응시하면 여기서 결과를 확인할 수 있어요!</p>
+            <div className="mt-4 text-xs text-gray-500">
+              디버그: completedTests={completedTests.length}, availableTests={availableTests.length}
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
+            <div className="text-xs text-gray-500 mb-4">
+              디버그: {completedTestsWithDetails.length}개 테스트 표시 중
+            </div>
             {completedTestsWithDetails.map((test, index) => {
-              const grade = getGrade(test.totalScore, test.questionCount * 10);
+              const grade = getGrade(test.totalScore, test.maxScore || 100);
               
               return (
                 <div
-                  key={test.id || index}
-                  className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => handleTestDetail(test)}
+                  key={test.testId || test.id || index}
+                  className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow"
                 >
                   <div className="flex justify-between items-center">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h4 className="text-xl font-bold text-gray-800">{test.testTitle} 테스트</h4>
+                        <h4 className="text-xl font-bold text-gray-800">{test.testTitle}</h4>
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${grade.bgColor} ${grade.color}`}>
                           {grade.grade}
                         </span>
@@ -251,22 +363,27 @@ export default function HistoryPage({ user, onBack }) {
                       </div>
                       
                       <div className="flex items-center space-x-4 text-sm text-gray-700 mb-2">
-                        <span>📊 {test.questionCount}문제</span>
-                        <span>⏰ {test.timeLimit}분</span>
-                        <span>🎯 {test.totalScore}점</span>
+                        <span>📊 {test.questionCount || 0}문제</span>
+                        <span>⏰ {test.timeLimit || 0}분</span>
+                        <span>🎯 {test.passingScore || 70}점</span>
                         <span>📅 {new Date(test.submittedAt).toLocaleDateString()}</span>
                       </div>
                       
                       <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <span>소요시간: {Math.round((new Date(test.submittedAt) - new Date(test.startedAt)) / 1000 / 60)}분</span>
-                        <span>합격점수: {test.passingScore}점</span>
+                        <span>소요시간: {Math.round((test.timeSpent || 0) / 60) || 0}분</span>
+                        <span>합격점수: {test.passingScore || 70}점</span>
                       </div>
                     </div>
                     
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-800 mb-1">{test.totalScore}점</div>
-                      <div className="text-sm text-gray-500">총점</div>
-                      <div className="text-xs text-blue-600 mt-2">클릭하여 상세보기</div>
+                      <div className="text-2xl font-bold text-gray-800 mb-1">{test.percentage || 0}점</div>
+                      <div className="text-sm text-gray-500 mb-3">총점</div>
+                      <button
+                        onClick={() => handleTestDetail(test)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        📊 상세보기
+                      </button>
                     </div>
                   </div>
                 </div>

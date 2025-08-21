@@ -6,30 +6,50 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
 import ErrorMessage from '../ui/ErrorMessage';
+import { userService } from '../services/apiService';
 
 export default function LoginForm({ onBack }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    // 간단한 데모용 로그인 (실제로는 서버 인증 필요)
-    if (email && password) {
-      // 이메일로 사용자 타입 구분 (데모용)
-      const userType = email.includes('teacher') ? 'teacher' : 'student';
-      const userData = {
-        id: Date.now(),
-        email,
-        name: email.split('@')[0],
-        type: userType
-      };
-      login(userData);
-    } else {
-      setError('이메일과 비밀번호를 입력해주세요!');
+    try {
+      if (email && password) {
+        // 백엔드에 로그인 API가 없으므로 기존 방식 사용
+        // 이메일로 사용자 조회
+        const user = await userService.getUserByEmail(email);
+        
+        if (user) {
+          // 실제로는 비밀번호 검증도 필요하지만 일단 패스
+          const userData = {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            type: user.userType.toLowerCase() // STUDENT -> student, TEACHER -> teacher
+          };
+          login(userData);
+        } else {
+          setError('등록되지 않은 이메일입니다.');
+        }
+      } else {
+        setError('이메일과 비밀번호를 입력해주세요!');
+      }
+    } catch (error) {
+      console.error('로그인 오류:', error);
+      if (error.message && error.message.includes('찾을 수 없습니다')) {
+        setError('등록되지 않은 이메일입니다.');
+      } else {
+        setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,8 +93,9 @@ export default function LoginForm({ onBack }) {
               variant="primary"
               size="lg"
               className="w-full"
+              disabled={isLoading}
             >
-              🚀 로그인하기
+              {isLoading ? '🔄 로그인 중...' : '🚀 로그인하기'}
             </Button>
           </form>
 

@@ -22,14 +22,17 @@ export default function StudentDashboardPage() {
     return <div>로딩 중...</div>;
   }
 
-  if (!user || user.type !== 'student') {
-    return null;
-  }
-
+  // 조건부 반환 대신 조건부 렌더링 사용
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100">
-      <Header user={user} />
-      <StudentDashboard user={user} />
+      {user && user.type === 'student' ? (
+        <>
+          <Header user={user} />
+          <StudentDashboard user={user} />
+        </>
+      ) : (
+        <div>접근 권한이 없습니다.</div>
+      )}
     </div>
   );
 } 

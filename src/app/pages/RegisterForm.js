@@ -7,6 +7,7 @@ import Card from '../ui/Card';
 import Input from '../ui/Input';
 import ErrorMessage from '../ui/ErrorMessage';
 import UserTypeSelector from '../ui/UserTypeSelector';
+import { userService } from '../services/apiService';
 
 export default function RegisterForm({ onBack }) {
   const [formData, setFormData] = useState({
@@ -14,9 +15,11 @@ export default function RegisterForm({ onBack }) {
     email: '',
     password: '',
     confirmPassword: '',
-    type: ''
+    type: '',
+    level: '초급' // 학생의 경우 사용될 레벨
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
 
   const handleChange = (e) => {
@@ -33,34 +36,59 @@ export default function RegisterForm({ onBack }) {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    // 유효성 검사
-    if (!formData.name || !formData.email || !formData.password || !formData.type) {
-      setError('모든 필드를 입력해주세요!');
-      return;
+    try {
+      // 유효성 검사
+      if (!formData.name || !formData.email || !formData.password || !formData.type) {
+        setError('모든 필드를 입력해주세요!');
+        return;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        setError('비밀번호가 일치하지 않습니다!');
+        return;
+      }
+
+      if (formData.password.length < 4) {
+        setError('비밀번호는 4자 이상 입력해주세요!');
+        return;
+      }
+
+      // 백엔드 API를 통한 사용자 등록
+      const userData = {
+        userInfo: {
+          email: formData.email,
+          password: formData.password,
+          name: formData.name
+        },
+        userType: formData.type.toUpperCase() // student -> STUDENT, teacher -> TEACHER
+      };
+      
+      // 학생인 경우 level 추가
+      if (formData.type === 'student') {
+        userData.level = formData.level;
+      }
+      
+      const newUser = await userService.register(userData);
+      
+      // 로컬 상태에 등록
+      const localUserData = {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        type: newUser.userType.toLowerCase()
+      };
+      register(localUserData);
+    } catch (error) {
+      console.error('회원가입 오류:', error);
+      setError('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
     }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다!');
-      return;
-    }
-
-    if (formData.password.length < 4) {
-      setError('비밀번호는 4자 이상 입력해주세요!');
-      return;
-    }
-
-    // 사용자 등록
-    const userData = {
-      id: Date.now(),
-      name: formData.name,
-      email: formData.email,
-      type: formData.type
-    };
-    register(userData);
   };
 
   return (
@@ -118,6 +146,25 @@ export default function RegisterForm({ onBack }) {
               onTypeChange={handleTypeChange}
             />
 
+            {/* 학생인 경우 레벨 선택 */}
+            {formData.type === 'student' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-800 mb-2">
+                  📚 영어 레벨
+                </label>
+                <select
+                  name="level"
+                  value={formData.level}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-800"
+                >
+                  <option value="초급">초급</option>
+                  <option value="중급">중급</option>
+                  <option value="고급">고급</option>
+                </select>
+              </div>
+            )}
+
             <ErrorMessage message={error} />
 
             <Button
@@ -125,8 +172,9 @@ export default function RegisterForm({ onBack }) {
               variant="primary"
               size="lg"
               className="w-full"
+              disabled={isLoading}
             >
-              🎊 가입완료!
+              {isLoading ? '🔄 가입 중...' : '🎊 가입완료!'}
             </Button>
           </form>
 
