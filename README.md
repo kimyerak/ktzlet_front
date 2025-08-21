@@ -1,36 +1,182 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# KT AI 교육 플랫폼 'KTzlet' 💝
 
-## Getting Started
+## 📋 프로젝트 개요
 
-First, run the development server:
+KT의 AI 기술을 활용해 학생 개개인의 학습 수준과 스타일에 맞춘 맞춤형 교육법을 제공하는 플랫폼으로서, 교사와 학생 간의 원활한 소통을 지원하여 공교육 수업 시나리오를 100% 충족시키는 서비스입니다.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🎯 프로젝트 비전 및 목표
+
+### 비전
+- **개인화 학습**: AI 기술을 활용한 학생 맞춤형 교육 제공
+- **효율적 교수**: 교사의 업무 효율성 증대 및 학생 관리 편의성 향상
+- **상호작용**: 교사와 학생 간의 원활한 소통 및 피드백 시스템 구축
+
+### 목표
+- 학생 개개인의 학습 수준에 맞는 맞춤형 문제 출제
+- 실시간 학습 진도 추적 및 성과 분석
+- 직관적이고 사용하기 쉬운 교육 플랫폼 제공
+
+## 🚀 주요 기능
+
+### 👨‍🏫 교사 기능
+- **문제 생성**: 받아쓰기, OX 문제, 4지선다 문제 자동 생성
+- **학생 관리**: 학생 목록 조회 및 성적 관리
+- **통계 분석**: 학생별 학습 진도 및 성과 분석
+- **퀴즈 관리**: 퀴즈 생성, 수정, 삭제 및 배포
+
+### 👨‍🎓 학생 기능
+- **퀴즈 응시**: 다양한 유형의 문제 풀이
+- **학습 기록**: 개인 학습 이력 및 성적 확인
+- **실시간 피드백**: 즉시 채점 및 해설 제공
+
+### 🤖 AI 기능
+- **자동 문제 생성**: 선택된 단어를 기반으로 AI가 문제 자동 생성
+- **음성 합성**: TTS를 활용한 받아쓰기 문제 음성 제공
+- **맞춤형 학습**: 학생 수준에 맞는 문제 난이도 조절
+
+## 🏗️ 애플리케이션 설계 및 구조
+
+### 프론트엔드 구조
+```
+src/
+├── app/
+│   ├── components/          # 공통 컴포넌트
+│   │   ├── dashboard/       # 대시보드 관련 컴포넌트
+│   │   ├── forms/          # 폼 컴포넌트
+│   │   ├── layout/         # 레이아웃 컴포넌트
+│   │   └── quiz/           # 퀴즈 관련 컴포넌트
+│   ├── contexts/           # React Context
+│   ├── dashboard/          # 대시보드 페이지
+│   │   ├── student/        # 학생 대시보드
+│   │   └── teacher/        # 교사 대시보드
+│   ├── services/           # API 서비스
+│   ├── ui/                 # UI 컴포넌트
+│   └── pages/              # 페이지 컴포넌트
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 백엔드 구조
+```
+backend/
+├── src/main/java/
+│   ├── controller/         # REST API 컨트롤러
+│   ├── service/           # 비즈니스 로직
+│   ├── repository/        # 데이터 접근 계층
+│   ├── domain/           # 엔티티 클래스
+│   ├── dto/              # 데이터 전송 객체
+│   └── config/           # 설정 클래스
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## 🗄️ DB 모델링 (ERD)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 주요 엔티티
+- **User**: 사용자 정보 (교사/학생 구분)
+- **Quiz**: 퀴즈 정보
+- **Question**: 문제 정보
+- **Vocabulary**: 단어장 정보
+- **StudentQuiz**: 학생 퀴즈 응시 기록
+- **StudentAnswer**: 학생 답안 정보
 
-## Learn More
+### 관계
+- User ↔ Quiz (1:N) - 교사가 퀴즈 생성
+- Quiz ↔ Question (1:N) - 퀴즈에 여러 문제
+- Question ↔ Vocabulary (N:1) - 문제와 단어 연결
+- User ↔ StudentQuiz (1:N) - 학생이 여러 퀴즈 응시
+- StudentQuiz ↔ StudentAnswer (1:N) - 퀴즈 응시에 여러 답안
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ 기술 스택
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 프론트엔드
+- **Next.js 14**: React 기반 풀스택 프레임워크
+- **React 18**: 사용자 인터페이스 구축
+- **Tailwind CSS**: 스타일링 및 반응형 디자인
+- **JavaScript ES6+**: 모던 JavaScript 문법 활용
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 백엔드
+- **Spring Boot 3**: Java 기반 웹 애플리케이션 프레임워크
+- **Spring Data JPA**: 데이터 접근 계층
+- **Lombok**: 보일러플레이트 코드 감소
+- **MySQL**: 관계형 데이터베이스
 
-## Deploy on Vercel
+### 개발 도구
+- **Git**: 버전 관리
+- **Docker**: 컨테이너화
+- **Docker Compose**: 멀티 컨테이너 관리
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🔌 외부 API 연동
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### OpenAI API
+- **용도**: AI 기반 문제 자동 생성
+- **연동 방식**: REST API 호출
+- **주요 기능**:
+  - 선택된 단어를 기반으로 다양한 유형의 문제 생성
+  - 받아쓰기, OX 문제, 4지선다 문제 자동 생성
+  - 문제 난이도 조절 및 맞춤형 학습 지원
+
+### Web Speech API (TTS)
+- **용도**: 받아쓰기 문제 음성 제공
+- **연동 방식**: 브라우저 내장 API 활용
+- **주요 기능**:
+  - 영어 단어 발음 제공
+  - 다양한 속도 및 언어 설정
+  - 실시간 음성 합성
+
+## 🚀 설치 및 실행
+
+### 프론트엔드 실행
+```bash
+# 의존성 설치
+npm install
+
+# 개발 서버 실행
+npm run dev
+
+# 브라우저에서 http://localhost:3000 접속
+```
+
+### 백엔드 실행
+```bash
+# Docker Compose로 데이터베이스 실행
+docker-compose up -d
+
+# Spring Boot 애플리케이션 실행
+./mvnw spring-boot:run
+```
+
+## 📊 기능 시연
+
+### 주요 기능 시연 영상
+- [교사 문제 생성 및 관리](링크)
+- [학생 퀴즈 응시](링크)
+- [AI 자동 문제 생성](링크)
+
+## 💡 프로젝트 소감
+
+### 배운 점
+1. **AI 기술 활용**: OpenAI API를 활용한 실제 AI 기능 구현 경험
+2. **풀스택 개발**: 프론트엔드와 백엔드 전체 개발 과정 경험
+3. **모듈화 설계**: 컴포넌트 기반 아키텍처 설계 및 구현
+4. **데이터베이스 설계**: ERD 설계부터 실제 구현까지의 과정
+5. **API 연동**: 외부 API와의 연동 및 에러 처리 경험
+
+### 아쉬웠던 점
+1. **실제 AI 모델 학습**: 외부 API 의존성으로 인한 자체 AI 모델 부재
+2. **실시간 기능**: WebSocket을 활용한 실시간 채팅 기능 미구현
+3. **모바일 최적화**: 모바일 앱 개발까지 확장하지 못한 점
+4. **성능 최적화**: 대용량 데이터 처리 시 성능 최적화 부족
+
+## 📝 평가 기준을 지키고자 노력한 점
+
+### 필수 기술 스택 활용 (10점)
+- ✅ Git 저장소 활용 (백엔드/프론트엔드 분리): 1점
+- ✅ DBMS Docker Container 설정 파일: 1점
+- ✅ 백엔드: SpringBoot, JPA, Lombok, DBMS: 4점
+- ✅ 프론트엔드: Next.js, React, AJAX: 4점
+
+### 코드 효율성, 가독성 모듈화 수준 (10점)
+- ✅ 백엔드 (5점)
+  - 필수 패키지 분리 (controller/service/repository/domain/dto)
+  - service, repository 컴포넌트 인터페이스 적용
+- ✅ 프론트엔드 (5점)
+  - 패키지 구조 분리 (app/components)
+  - 공통 컴포넌트 분리 (Header/Footer 등)
+  - AJAX 활용
